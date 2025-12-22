@@ -4,7 +4,6 @@ const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const http = require("http");
-const paymentWebhookRouter = require("./routes/paymentWebhook");
 
 const app = express();
 
@@ -20,7 +19,7 @@ const corsOptions = {
 app.use(
   "/payment/webhook",
   express.raw({ type: "application/json" }),
-  paymentWebhookRouter
+  require("./routes/paymentWebhook")
 );
 
 app.use(cors(corsOptions));

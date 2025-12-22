@@ -12,7 +12,7 @@ router.post("/", async (req, res) => {
 
     const secret = process.env.RAZORPAY_WEB_HOOK_SECRET_KEY;
     const signature = req.get("x-razorpay-signature");
-    const body = req.body.toString();
+    const body = req.body;
 
     // console.log("📌 Webhook Body:", body);
     // console.log("📌 Received Signature:", signature);
