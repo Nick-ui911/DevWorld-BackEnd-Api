@@ -6,7 +6,7 @@ const transporter = require("../utils/nodeMailerConfig");
 
 const router = express.Router();
 
-router.post("/payment/webhook", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     // console.log("📌 Webhook received at:", new Date().toISOString());
 
@@ -100,3 +100,4 @@ router.post("/payment/webhook", async (req, res) => {
     res.status(500).json({ error: "Webhook processing failed" });
   }
 });
+module.exports = router;
