@@ -4,6 +4,7 @@ const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const http = require("http");
+const paymentWebhookRouter = require("./routes/paymentWebhook");
 
 const app = express();
 
@@ -14,6 +15,13 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 // require("./utils/cronJob")
+
+// Razorpay webhook (RAW body needed for webhook of razorpay)
+app.post(
+  "/payment/webhook",
+  express.raw({ type: "application/json" }),
+  paymentWebhookRouter
+);
 
 app.use(cors(corsOptions));
 app.use(express.json());
