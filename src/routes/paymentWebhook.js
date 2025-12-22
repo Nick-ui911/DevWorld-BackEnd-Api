@@ -16,7 +16,10 @@ router.post("/", async (req, res) => {
 
     // console.log("📌 Webhook Body:", body);
     // console.log("📌 Received Signature:", signature);
-
+console.log("🔎 body type:", typeof req.body);
+console.log("🔎 is Buffer:", Buffer.isBuffer(req.body));
+console.log("🔎 signature:", req.headers["x-razorpay-signature"]);
+console.log("🔎 secret exists:", !!process.env.RAZORPAY_WEB_HOOK_SECRET_KEY);
     // Validate webhook signature
     const isValid = Razorpay.validateWebhookSignature(body, signature, secret);
     // console.log("📌 Signature Valid:", isValid);
