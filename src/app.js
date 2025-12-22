@@ -17,7 +17,7 @@ const corsOptions = {
 // require("./utils/cronJob")
 
 // Razorpay webhook (RAW body needed for webhook of razorpay)
-app.post(
+app.use(
   "/payment/webhook",
   express.raw({ type: "application/json" }),
   paymentWebhookRouter
@@ -34,7 +34,7 @@ const userRouter = require("./routes/user");
 const paymentRouter = require("./routes/payment");
 const initializeSocket = require("./utils/socket");
 const chatRouter = require("./routes/chat");
-const mailAuthRouter = require("./routes/nodeMailer")
+const mailAuthRouter = require("./routes/nodeMailer");
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
@@ -42,14 +42,13 @@ app.use("/", requestRouter);
 app.use("/", userRouter);
 app.use("/", paymentRouter);
 app.use("/", chatRouter);
-app.use("/",mailAuthRouter)
+app.use("/", mailAuthRouter);
 app.get("/test-cors", cors(corsOptions), (req, res) => {
   res.json({ message: "CORS is working!" });
 });
 
 const server = http.createServer(app);
 initializeSocket(server);
-
 
 // Connect to the database and start the server
 connectDB()
