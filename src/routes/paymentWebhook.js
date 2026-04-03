@@ -8,21 +8,22 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    // console.log("📌 Webhook received at:", new Date().toISOString());
-
     const secret = process.env.RAZORPAY_WEB_HOOK_SECRET_KEY;
     const signature = req.get("x-razorpay-signature");
-const rawBody = req.body; // buffer
-const body = rawBody.toString(); // string for parsing
 
-const isValid = Razorpay.validateWebhookSignature(
-  rawBody, // ✅ MUST be buffer
-  signature,
-  secret
-);
+    // req.body is a Buffer (from express.raw), convert to string for both
+    // signature validation and JSON parsing
+    const body = req.body.toString("utf8");
+
+    // ✅ validateWebhookSignature expects a STRING, not a Buffer
+    const isValid = Razorpay.validateWebhookSignature(
+      body,      // ✅ must be string
+      signature,
+      secret
+    );
 
     if (!isValid) {
-      // console.error("❌ Invalid webhook signature");
+      console.error("❌ Invalid webhook signature");
       return res.status(400).json({ message: "Invalid webhook signature" });
     }
 
@@ -31,8 +32,8 @@ const isValid = Razorpay.validateWebhookSignature(
     const paymentData = payload.payload.payment.entity;
     const event = payload.event;
 
-    // console.log("📌 Payment Data:", paymentData);
-    // console.log("📌 Event:", event);
+    console.log("📌 Webhook event:", event);
+    console.log("📌 Order ID:", paymentData.order_id);
 
     // Find and update payment in DB
     const payment = await Payment.findOne({ orderId: paymentData.order_id });
@@ -42,11 +43,9 @@ const isValid = Razorpay.validateWebhookSignature(
       return res.status(404).json({ message: "Payment not found" });
     }
 
-    // console.log("📌 Payment Found:", payment);
-
     payment.status = paymentData.status;
     await payment.save();
-    // console.log("📌 Payment Status Updated:", payment.status);
+    console.log("📌 Payment status updated to:", payment.status);
 
     // Find and update user based on payment
     const user = await User.findOne({ _id: payment.userId });
@@ -56,48 +55,47 @@ const isValid = Razorpay.validateWebhookSignature(
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log("📌 User Found:", user);
-
     const mailOptions = {
-      from: process.env.EMAIL_ADMIN, // Always send from your own email
-      to: user.email, // User's email
+      from: process.env.EMAIL_ADMIN,
+      to: user.email,
       subject: "Payment Confirmation - Thank You for Your Purchase!",
-      text: `Dear ${user.name},
-    
-    We are pleased to inform you that we have successfully received your payment for the **${payment.notes.membershipType}** membership.
-    
-    Thank you for choosing our service! Your premium benefits are now active. If you have any questions, feel free to reach out to our support team.
-    
-    Best regards,  
-    DevTinder Team`,
+      text: `Dear ${user.name},\n\nWe are pleased to inform you that we have successfully received your payment for the ${payment.notes.membershipType} membership.\n\nThank you for choosing our service! Your premium benefits are now active. If you have any questions, feel free to reach out to our support team.\n\nBest regards,\nDevWorld Team`,
     };
     const mailOptions2 = {
-      from: process.env.EMAIL_ADMIN, // Always send from your own email
-      to: user.email, // User's email
+      from: process.env.EMAIL_ADMIN,
+      to: user.email,
       subject: "Payment Failed - Action Required",
-      text: `Dear ${user.name},
-    
-    Unfortunately, your payment for the **${payment.notes.membershipType}** membership could not be processed.
-    
-    Please try again or contact our support team if you continue to experience issues. We're here to help!
-    
-    Best regards,  
-    DevTinder Team`,
+      text: `Dear ${user.name},\n\nUnfortunately, your payment for the ${payment.notes.membershipType} membership could not be processed.\n\nPlease try again or contact our support team if you continue to experience issues. We're here to help!\n\nBest regards,\nDevWorld Team`,
     };
 
     if (event === "payment.captured") {
       user.isPremium = true;
       user.membershipType = payment.notes.membershipType;
       await user.save();
-      await transporter.sendMail(mailOptions);
+      console.log("📌 User upgraded to premium:", user.email);
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log("📧 Payment success email sent to:", user.email);
+      } catch (emailErr) {
+        console.error("⚠️ Failed to send success email:", emailErr.message);
+        // Don't fail the webhook just because email failed
+      }
     } else if (event === "payment.failed") {
-      await transporter.sendMail(mailOptions2);
+      try {
+        await transporter.sendMail(mailOptions2);
+        console.log("📧 Payment failure email sent to:", user.email);
+      } catch (emailErr) {
+        console.error("⚠️ Failed to send failure email:", emailErr.message);
+      }
     }
 
+    // ✅ Always respond 200 to Razorpay so it doesn't retry
     res.status(200).json({ status: "Webhook received" });
   } catch (error) {
-    console.error("🚨 Webhook error:", error);
+    console.error("🚨 Webhook error:", error.message || error);
     res.status(500).json({ error: "Webhook processing failed" });
   }
 });
+
 module.exports = router;
+
