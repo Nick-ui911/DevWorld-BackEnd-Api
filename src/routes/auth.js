@@ -9,7 +9,7 @@ const admin = require("../utils/firebaseAdmin");
 authRouter.post("/signup", async (req, res) => {
   try {
     validateData(req);
-    const { name, email,password, gender} = req.body;
+    const { name, email, password, gender } = req.body;
 
     // 🔹 Check if the email already exists
     const existingUser = await User.findOne({ email });
@@ -25,7 +25,6 @@ authRouter.post("/signup", async (req, res) => {
       password: hashPassword,
       email,
       gender,
-
     });
 
     const savedUser = await user.save(); // Save the user to the database
@@ -35,7 +34,11 @@ authRouter.post("/signup", async (req, res) => {
     // console.log(token);
     // Set the cookie with the token
     res.cookie("token", token, {
-      expires: new Date(Date.now() + 8 * 3600000), // 8 hours expiration
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED (HTTPS)
+      sameSite: "None", // 🔥 REQUIRED (cross-domain)
+      path: "/", // ✅ good practice
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
     res.json({
       message: "User created successfully",
@@ -48,8 +51,7 @@ authRouter.post("/signup", async (req, res) => {
 });
 authRouter.post("/google-signup", async (req, res) => {
   try {
-
-    const { name, email, idToken} = req.body;
+    const { name, email, idToken } = req.body;
     if (!idToken) {
       return res.status(400).json({ message: "Missing idToken" });
     }
@@ -63,20 +65,16 @@ authRouter.post("/google-signup", async (req, res) => {
       return res.status(400).json({ message: "Email mismatch" });
     }
 
-
     // Check if the email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-  
-
     // Create a new user instance
     const user = new User({
       name,
       email,
-  
     });
 
     // Save the user to the database
@@ -87,7 +85,11 @@ authRouter.post("/google-signup", async (req, res) => {
 
     // Set the cookie with the token
     res.cookie("token", token, {
-      expires: new Date(Date.now() + 8 * 3600000), // 8 hours expiration
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED (HTTPS)
+      sameSite: "None", // 🔥 REQUIRED (cross-domain)
+      path: "/", // ✅ good practice
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     // Respond with success message and user data
@@ -127,7 +129,11 @@ authRouter.post("/login", async (req, res) => {
     // console.log(token);
     // Set the cookie with the token
     res.cookie("token", token, {
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiration
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED (HTTPS)
+      sameSite: "None", // 🔥 REQUIRED (cross-domain)
+      path: "/", // ✅ good practice
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     // Successful login
@@ -160,9 +166,12 @@ authRouter.post("/google-login", async (req, res) => {
 
     // Set the cookie with the token
     res.cookie("token", token, {
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiration
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED (HTTPS)
+      sameSite: "None", // 🔥 REQUIRED (cross-domain)
+      path: "/", // ✅ good practice
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
-
     // Successful login
     return res.status(200).send(user);
   } catch (error) {
