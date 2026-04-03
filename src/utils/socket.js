@@ -177,26 +177,14 @@ const sendPushNotification = async (
     // 🔗 This is the unique FCM token assigned to the user's device or browser.
     // It ensures the notification is delivered to the correct recipient.
     token: fcmToken,
-    notification: {
-      // ✅ Used for Background Notifications
-      title: `New message from ${senderName}`,
-      body: messageText,
-    },
+    // ✅ Data-only payload — no top-level `notification` key!
+    // This ensures onBackgroundMessage() fires in the service worker,
+    // so our custom showNotification() with click_action URL is used.
     data: {
-      // ✅ Used for Foreground Notifications (Handled Manually)
       title: `New message from ${senderName}`,
       body: messageText,
       click_action: `https://devworld.in/chat/${userId}`,
       messageId: new Date().getTime().toString(),
-    },
-    webpush: {
-      // ✅ Ensures proper click action in background
-      notification: {
-        title: `New message from ${senderName}`,
-        body: messageText,
-        icon: "https://devworld.in/logodevworld.png", // ✅ Ensure this is a valid URL
-        click_action: `https://devworld.in/chat/${userId}`, // ✅ Clicking notification opens this URL
-      },
     },
   };
 
