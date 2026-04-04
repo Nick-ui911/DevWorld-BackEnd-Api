@@ -18,7 +18,7 @@ const corsOptions = {
 // Razorpay webhook (RAW body needed for webhook of razorpay)
 app.use(
   "/payment/webhook",
-  express.raw({ type: "application/json" }),
+  express.raw({ type: "*/*" }), // ✅ FIXED
   require("./routes/paymentWebhook")
 );
 
