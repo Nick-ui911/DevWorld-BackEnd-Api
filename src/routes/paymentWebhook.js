@@ -11,19 +11,32 @@ router.post("/", async (req, res) => {
     const secret = process.env.RAZORPAY_WEB_HOOK_SECRET_KEY;
     const signature = req.get("x-razorpay-signature");
 
-    // req.body is a Buffer (from express.raw), convert to string for both
-    // signature validation and JSON parsing
-    const body = req.body.toString("utf8");
+    console.log("📌 Webhook Header (Signature):", signature);
+    console.log("📌 Webhook Secret Available:", !!secret);
+    
+    if (!req.body) {
+      console.error("❌ req.body is undefined");
+      return res.status(400).json({ message: "Empty request body" });
+    }
 
-    // ✅ validateWebhookSignature expects a STRING, not a Buffer
+    let body;
+    if (Buffer.isBuffer(req.body)) {
+      body = req.body.toString("utf8");
+    } else if (typeof req.body === "string") {
+      body = req.body;
+    } else {
+      console.error("❌ req.body is not a Buffer or String. Type:", typeof req.body);
+      body = JSON.stringify(req.body);
+    }
+
     const isValid = Razorpay.validateWebhookSignature(
-      body,      // ✅ must be string
+      body,
       signature,
       secret
     );
 
     if (!isValid) {
-      console.error("❌ Invalid webhook signature");
+      console.error("❌ Invalid webhook signature. Secret:", secret, "Signature:", signature);
       return res.status(400).json({ message: "Invalid webhook signature" });
     }
 
