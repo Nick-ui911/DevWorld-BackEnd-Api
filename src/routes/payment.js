@@ -14,7 +14,7 @@ paymentRouter.post("/payment/create", authUser, async (req, res) => {
     const { membershipType } = req.body;
     const { name, email } = req.user;
     const order = await instance.orders.create({
-      amount: membershipAmount[membershipType],
+      amount: membershipAmount[membershipType] * 100,
       currency: "INR",
       receipt: `receipt#1 ${Date.now()}`,
       notes: {
