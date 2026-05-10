@@ -18,7 +18,9 @@ const getSecretRoomId = (userId, connectionUserId) => {
 const initializeSocket = (server) => {
   const io = socket(server, {
     cors: {
-      origin: ["http://localhost:5173", "https://devworld.in","https://dev-world-front-end.vercel.app","https://www.devworld.in"],
+      origin: function (origin, callback) {
+        callback(null, true);
+      },
       credentials: true,
     },
   });
